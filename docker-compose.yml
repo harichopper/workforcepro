@@ -1,0 +1,62 @@
+# ============================================================
+# WorkForce Pro – Docker Compose
+# For local development: spins up the app + a MySQL container.
+# DO NOT use this compose file in production.
+# In production, deploy the Dockerfile to Render/Railway/VPS.
+# ============================================================
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: workforcepro_app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: workforcepro
+      DB_USER: wfp_user
+      DB_PASS: wfp_secret
+    volumes:
+      # Mount uploads and logs for persistence during dev
+      - ./uploads:/var/www/html/uploads
+      - ./logs:/var/www/html/logs
+      - ./database/backups:/var/www/html/database/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - wfp_net
+
+  db:
+    image: mysql:8.4
+    container_name: workforcepro_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secret
+      MYSQL_DATABASE: workforcepro
+      MYSQL_USER: wfp_user
+      MYSQL_PASSWORD: wfp_secret
+    volumes:
+      # Seed the DB on first container start
+      - ./database.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_secret"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - wfp_net
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  wfp_net:
+    driver: bridge

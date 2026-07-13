@@ -253,7 +253,123 @@ php -S localhost:8000
 
 ---
 
-## ☁️ Cloud Deployment (Render)
+## 🐳 Docker Setup
+
+WorkForce Pro ships with a production-grade Docker configuration.
+
+### Files
+
+| File | Purpose |
+|---|---|
+| `Dockerfile` | Production image (PHP 8.3 + Apache + OPcache + GD) |
+| `docker-compose.yml` | Local dev stack (App + MySQL auto-seeded) |
+| `docker/php.ini` | PHP production settings (OPcache, security, limits) |
+| `docker/apache.conf` | Apache vhost (security headers, caching, compression) |
+| `docker/entrypoint.sh` | Waits for DB healthcheck before starting Apache |
+| `.dockerignore` | Keeps the image lean (excludes dev files) |
+
+---
+
+### Local Development (docker-compose)
+
+> Spins up the app **and** a MySQL 8.4 container. Database is auto-seeded from `database.sql` on first run.
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/harichopper/workforcepro.git
+cd workforcepro
+
+# 2. Build and start all services
+docker compose up --build
+
+# 3. Open in your browser
+# http://localhost:8080/login.php
+```
+
+- **Email:** `admin@workforce.test`
+- **Password:** `password`
+
+To stop:
+```bash
+docker compose down
+```
+
+To wipe the database volume and start fresh:
+```bash
+docker compose down -v
+```
+
+---
+
+### Production Deployment
+
+#### Option A – Render (Recommended)
+
+1. Push this repo to GitHub.
+2. **Render Dashboard → New → Web Service**
+3. Select your GitHub repo — Render auto-detects the `Dockerfile`.
+4. Set **Environment Variables**:
+
+| Variable | Value |
+|---|---|
+| `DB_HOST` | Your cloud MySQL host |
+| `DB_PORT` | `3306` (or provider-specific) |
+| `DB_NAME` | `workforcepro` |
+| `DB_USER` | Your DB user |
+| `DB_PASS` | Your DB password |
+
+5. Click **Deploy**.
+
+> Use [Aiven](https://aiven.io/mysql) or [PlanetScale](https://planetscale.com/) for a free managed MySQL.
+> Mount a **Persistent Disk** at `/var/www/html/uploads` for avatar persistence.
+
+---
+
+#### Option B – VPS / DigitalOcean / AWS EC2
+
+```bash
+# On your server
+git clone https://github.com/harichopper/workforcepro.git
+cd workforcepro
+
+# Create a .env-style export or pass inline
+docker build -t workforcepro .
+
+docker run -d \
+  --name workforcepro \
+  -p 80:80 \
+  -e DB_HOST=your.db.host \
+  -e DB_PORT=3306 \
+  -e DB_NAME=workforcepro \
+  -e DB_USER=your_user \
+  -e DB_PASS=your_password \
+  -v $(pwd)/uploads:/var/www/html/uploads \
+  -v $(pwd)/logs:/var/www/html/logs \
+  --restart unless-stopped \
+  workforcepro
+```
+
+---
+
+#### Production Checklist
+
+- [x] `display_errors = Off` in `docker/php.ini`
+- [x] `expose_php = Off` — PHP version hidden
+- [x] OPcache enabled with `validate_timestamps = 0`
+- [x] Security headers: `X-Frame-Options`, `X-Content-Type-Options`, `XSS-Protection`, `Referrer-Policy`
+- [x] Sensitive directories blocked by Apache (`config/`, `models/`, `logs/`, etc.)
+- [x] GZIP compression enabled for HTML, CSS, JS, JSON
+- [x] Static asset caching (1 year `Cache-Control`)
+- [x] Entrypoint waits for DB before starting Apache
+- [x] Uploads directory is writable; PHP execution blocked via `.htaccess`
+- [ ] Add an SSL certificate (e.g. Certbot / Render auto-TLS)
+- [ ] Mount a persistent disk for `uploads/` in managed cloud environments
+
+---
+
+## ☁️ Cloud Deployment (Render — no Docker)
+
+
 
 WorkForce Pro ships with a `Dockerfile` for instant cloud deployment.
 

@@ -1,0 +1,25 @@
+# ── Source control ──────────────────────────────────────────
+.git
+.gitignore
+
+# ── Dev environment ─────────────────────────────────────────
+docker-compose.yml
+.env
+.env.example
+
+# ── Local MySQL data ─────────────────────────────────────────
+mysql-data/
+
+# ── Logs and generated files ─────────────────────────────────
+logs/
+database/backups/
+
+# ── IDE / OS ─────────────────────────────────────────────────
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# ── Uploads (mounted as volume in prod) ──────────────────────
+uploads/*
+!uploads/.htaccess
