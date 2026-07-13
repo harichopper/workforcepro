@@ -35,7 +35,8 @@ RUN rm -rf /var/www/html/docker \
            /var/www/html/database/backups/*.sql 2>/dev/null || true
 
 # ── Directory permissions ─────────────────────────────────────
-RUN chown -R www-data:www-data /var/www/html \
+RUN mkdir -p /var/www/html/uploads /var/www/html/logs /var/www/html/database/backups \
+    && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
     && chmod -R 775 /var/www/html/uploads \
     && chmod -R 775 /var/www/html/logs \
