@@ -12,7 +12,7 @@ echo "[entrypoint] Waiting for MySQL at ${DB_HOST}:${DB_PORT}..."
 
 MAX_TRIES=30
 i=0
-while ! nc -z "$DB_HOST" "$DB_PORT" 2>/dev/null; do
+while ! php -r "\$f = @fsockopen(getenv('DB_HOST'), (int)getenv('DB_PORT'), \$errCode, \$errStr, 2); if (\$f) { fclose(\$f); exit(0); } exit(1);"; do
     i=$((i+1))
     if [ "$i" -ge "$MAX_TRIES" ]; then
         echo "[entrypoint] ERROR: Database not reachable after ${MAX_TRIES}s. Exiting."
