@@ -1,0 +1,8 @@
+mysql-data/
+.env
+uploads/*
+!uploads/.htaccess
+database/backups/
+logs/
+.vscode/
+.idea/
